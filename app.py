@@ -91,7 +91,7 @@ if df_all["channel"].dtype != "O":
 if df_all["merchant_type"].dtype != "O":
     df_all["merchant_type"] = df_all["merchant_type"].map(merchant_map).fillna(df_all["merchant_type"])
 
-# ---------- Ensure required columns ----------
+# Ensure required columns
 for c in ["fraud_score", "is_fraud", "amount", "merchant_type", "channel", "location", "timestamp"]:
     if c not in df_all.columns:
         st.error(f"Required column missing from data: {c}")
@@ -268,5 +268,6 @@ with tab4:
     - Deploy automated data validation with **Great Expectations / Pandera**  
     - Combine with **Tableau or Power BI** for enterprise-ready dashboards  
     """)
+
 
 
