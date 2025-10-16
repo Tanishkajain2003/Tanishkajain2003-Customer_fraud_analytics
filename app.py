@@ -1,4 +1,4 @@
-# dashboard/app.py
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -6,15 +6,12 @@ import plotly.express as px
 import os
 from datetime import datetime, timedelta
 
-# ---------- Config ----------
 st.set_page_config(page_title="Customer Transaction Data Quality & Fraud Analytics",
                    page_icon="💳", layout="wide")
 
-# ---------- Robust path resolving ----------
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # project root
 REPORT_PATH = os.path.join(BASE_DIR, "data", "reports", "fraud_predictions.csv")
 
-# ---------- Helper: create small dummy dataset if file missing ----------
 def create_dummy(path, n=10000, fraud_rate=0.07):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     rng = np.random.default_rng(42)
@@ -35,7 +32,7 @@ def create_dummy(path, n=10000, fraud_rate=0.07):
         "previous_transactions": rng.poisson(2, n),
         "avg_transaction_value": np.round(np.clip(rng.normal(50, 20, n), 1.0, None), 2),
     })
-    # label fraud intelligently for demo
+    
     score = (df["amount"] / (df["avg_transaction_value"] + 1)) + df["is_international"]*2
     probs = (score - score.min()) / (score.max() - score.min() + 1e-9)
     probs = probs + rng.random(n)*0.3
@@ -48,7 +45,6 @@ def create_dummy(path, n=10000, fraud_rate=0.07):
     df.to_csv(path, index=False)
     return df
 
-# ---------- Load data (robust) ----------
 if os.path.exists(REPORT_PATH):
     try:
         df_all = pd.read_csv(REPORT_PATH, parse_dates=["timestamp"], low_memory=False)
@@ -59,7 +55,7 @@ else:
     st.info("No fraud_predictions.csv found — creating a realistic dummy dataset for demo.")
     df_all = create_dummy(REPORT_PATH, n=100000, fraud_rate=0.07)
 
-# ---------- ✅ Mapping for location, channel, merchant ----------
+# Mapping for location, channel, merchant 
 location_map = {
     0: "Mumbai",
     1: "Delhi",
@@ -101,7 +97,7 @@ for c in ["fraud_score", "is_fraud", "amount", "merchant_type", "channel", "loca
         st.error(f"Required column missing from data: {c}")
         st.stop()
 
-# ---------- Normalize fields ----------
+# Normalize fields
 df_all["merchant_type"] = df_all["merchant_type"].astype(str)
 df_all["channel"] = df_all["channel"].astype(str)
 df_all["location"] = df_all["location"].astype(str)
@@ -110,7 +106,7 @@ df_all["fraud_score"] = pd.to_numeric(df_all["fraud_score"], errors="coerce").fi
 df_all["amount"] = pd.to_numeric(df_all["amount"], errors="coerce").fillna(0.0)
 df_all["timestamp"] = pd.to_datetime(df_all["timestamp"], errors="coerce")
 
-# ---------- Streamlit UI styling ----------
+# Streamlit UI styling
 st.markdown("""
     <style>
     .stButton>button, .stTextInput>div>input, .stDateInput>div>div>input, .stSlider>div input {
@@ -121,7 +117,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ---------- Sidebar ----------
+# Sidebar
 st.sidebar.image(r"3D_data_analysis_illustration-removebg-preview.png", width=180)
 st.sidebar.markdown("### 🎛 Control Panel")
 
@@ -131,7 +127,7 @@ max_ts = df_all["timestamp"].max().date() if not df_all["timestamp"].isna().all(
 start_date = st.sidebar.date_input("Start date", min_ts)
 end_date = st.sidebar.date_input("End date", max_ts)
 
-# ---------- Filter data ----------
+#  Filter data 
 mask = (df_all["fraud_score"] >= min_score) & (df_all["fraud_score"] <= max_score)
 if "timestamp" in df_all.columns:
     mask = mask & (df_all["timestamp"].dt.date >= start_date) & (df_all["timestamp"].dt.date <= end_date)
@@ -140,7 +136,7 @@ if filtered.shape[0] == 0:
     st.warning("No data matches your filters. Showing sample instead.")
     filtered = df_all.sample(min(500, len(df_all)), random_state=42)
 
-# ---------- Header ----------
+# Header
 st.markdown("""
 <div style="
   background: linear-gradient(135deg, #1E1E2F, #2B2D42, #3A0CA3);
@@ -164,7 +160,7 @@ Empowering Financial Trust with Data, Insights, and AI ⚡
 
 st.write("---")
 
-# ---------- KPIs ----------
+# KPIs
 total_txns = len(filtered)
 fraud_txns = filtered["is_fraud"].sum()
 fraud_rate = (fraud_txns / total_txns * 100) if total_txns > 0 else 0.0
@@ -178,7 +174,7 @@ c3.metric("📈 Average Amount", f"₹{avg_amount:,.2f}")
 # ---------- Tabs ----------
 tab1, tab2, tab3, tab4 = st.tabs(["🔍 Fraud Detection", "🧹 Data Quality", "🌍 Insights", "📑 Reports"])
 
-# ---------- Tab 1 ----------
+# Tab 1
 with tab1:
     st.header("🚨 Fraud Detection Insights")
     fig = px.histogram(filtered, x="fraud_score", color="is_fraud", nbins=40,
@@ -190,7 +186,7 @@ with tab1:
     st.dataframe(top[["transaction_id", "customer_id", "timestamp", "amount", "location", "fraud_score", "is_fraud"]],
                  use_container_width=True)
 
-# ---------- Tab 2 ----------
+# Tab 2
 with tab2:
     st.header("🧹 Data Quality Checks")
     missing_total = filtered.isnull().sum().sum()
@@ -217,7 +213,7 @@ with tab2:
     st.markdown("#### Data sample (cleaned / filtered)")
     st.dataframe(filtered.head(200), use_container_width=True)
 
-# ---------- Tab 3 ----------
+# Tab 3
 with tab3:
     st.header("🌍 Transaction Insights")
     fig3 = px.box(filtered, x="merchant_type", y="amount", color="is_fraud")
@@ -229,7 +225,7 @@ with tab3:
     fig5 = px.bar(loc_counts, x="location", y="count", title="Fraud Cases by Location")
     st.plotly_chart(fig5, use_container_width=True)
 
-# ---------- Tab 4 ----------
+# Tab 4
 with tab4:
     st.header("📑 Data Lineage & Pipeline")
     st.markdown("**Data Flow:**  🗂️ Raw → 🧹 Cleaned → 🤖 Model Scoring → 📊 Reports → 🌐 Dashboard")
@@ -272,4 +268,5 @@ with tab4:
     - Deploy automated data validation with **Great Expectations / Pandera**  
     - Combine with **Tableau or Power BI** for enterprise-ready dashboards  
     """)
+
 
