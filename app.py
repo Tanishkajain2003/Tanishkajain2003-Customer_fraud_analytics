@@ -122,7 +122,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------- Sidebar ----------
-st.sidebar.image(r"C:\Users\TANISHKA\OneDrive\Documents\customer_fraud_analytics\Icon\3D_data_analysis_illustration-removebg-preview.png", width=180)
+st.sidebar.image(r"3D_data_analysis_illustration-removebg-preview.png", width=180)
 st.sidebar.markdown("### 🎛 Control Panel")
 
 min_score, max_score = st.sidebar.slider("Select Fraud Score Range", 0.0, 1.0, (0.0, 1.0), 0.01)
@@ -272,3 +272,4 @@ with tab4:
     - Deploy automated data validation with **Great Expectations / Pandera**  
     - Combine with **Tableau or Power BI** for enterprise-ready dashboards  
     """)
+
